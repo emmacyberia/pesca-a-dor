@@ -23,5 +23,4 @@ def main_money_maker():
         login(account["email"], account["password"], account["imagem"], account["char"])
         apply_elixir_mode(use_thread_kill_shiny, account)    
         logout()
-        print("esperando 15s antes de logar na outra conta")
-        sleep(15)  # pra rotação ficar permanente, precisa esperar pelo menos 10s entre todas as contas
+        sleep(15)
