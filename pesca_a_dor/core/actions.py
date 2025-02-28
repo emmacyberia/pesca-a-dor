@@ -4,7 +4,9 @@ from datetime import date
 from keyboard import add_hotkey, press, release, press_and_release
 from threading import Thread, Event
 from core.config import *
+from core.accounts import pxg_accounts
 from json import load
+import argparse
 import ctypes
 import os
 
@@ -34,7 +36,7 @@ def get_current_time():
 def log(message):
     current_time = get_current_time()
     formatted_message = f"{current_time}: {message}\n"
-    with open(today_log, "a", encoding="utf-8") as log_output:
+    with open(today_log, "w", encoding="utf-8") as log_output:
         log_output.write(formatted_message)
     print(current_time, ":", message)
 
@@ -455,6 +457,71 @@ def release_pokemon(message):
     click(button="right")
     sleep(1)
 
+def main_pesca_a_dor():
+    """Main function."""
+    log("-------------------")
+    log(f"PESCA-A-DOR {VERSION}")
+    log("-------------------")
+    log(f"{START_KEY}   → Start")
+    log(f"{PAUSE_KEY} → Pause")
+    log(f"{STOP_KEY}       → Exit")
+    log("-------------------")
+    
+    with open("pesca_a_dor/core/infos.json", "r") as file:
+        config_json = load(file)
+    
+    global counter
+    while counter < minigame_repeats:
+        pause_event.wait()
+        REGION_FISHING = set_fishing_rod()
+        start_and_join_thread(threadKillShiny, kill_shiny, (KILL_POKEMON_LIST, config_json["USE_THREAD_KILL_SHINY"]))
+        start_and_join_thread(threadSomeActions, some_actions, (config_json["USE_THREAD_KILL_SHINY"],))
+        
+        if constant_search_dragon() and config_json["USE_THREAD_BALL_DRAGON"]:
+            threadSearchDragon = Thread(target=ball_dragon)
+            threadSearchDragon.start()
+        
+        wait_bubble(REGION_FISHING)
+        counter = minigame(counter)
+
+        if find_elixir() and config_json["FISH_MAGIKARP"]:
+            config_json["USE_THREAD_KILL_SHINY"] = apply_elixir_mode(config_json["USE_THREAD_KILL_SHINY"])
+        
+        logout_session(counter)
+
+    join_thread_if_alive(threadSearchDragon)
+
+def main_money_maker():
+    """Main function."""
+    log("-------------------")
+    log(f"MONEY-MAKER {VERSION}")
+    log("-------------------")
+    log(f"{START_KEY}   → Start")
+    log(f"{PAUSE_KEY} → Pause")
+    log(f"{STOP_KEY}       → Exit")
+    log("-------------------")
+
+    use_thread_kill_shiny = True
+    accounts = pxg_accounts
+    infinite_accounts = cycle(accounts)
+
+    for account in infinite_accounts:
+        pause_event.wait() 
+        login(account["email"], account["password"], account["imagem"], account["char"])
+        apply_elixir_mode(use_thread_kill_shiny, account)    
+        logout()
+        sleep(15)
+
+def main():
+    parser = argparse.ArgumentParser(description="pesca-a-dor: fishing bot for PokeXGames")
+    parser.add_argument('-m', '--mode', type=int, choices=[1, 2], required=True, help='Select mode: 1 for pesca-a-dor, 2 for money-maker')
+    args = parser.parse_args()
+    
+    if args.mode == 1:
+        main_pesca_a_dor()
+    elif args.mode == 2:
+        main_money_maker()
+    
 # control global events
 pause_event = Event()
 stop_event = Event()
@@ -465,11 +532,11 @@ add_hotkey(PAUSE_KEY, pause_loop)
 add_hotkey(STOP_KEY, stop_loop)
 
 threadKillShiny = Thread(target=kill_shiny, args=(KILL_POKEMON_LIST, config_json["USE_THREAD_KILL_SHINY"]))
-#threadSomeActions = Thread(target=some_actions, args=(config_json["USE_THREAD_KILL_SHINY"],))
+threadSomeActions = Thread(target=some_actions, args=(config_json["USE_THREAD_KILL_SHINY"],))
 threadSearchDragon = Thread(target=ball_dragon, args=(config_json["USE_THREAD_BALL_DRAGON"],))
 threadSearchNormal = Thread(target=ball_normal, args=(config_json["USE_THREAD_BALL_DRAGON"],))
 
 with open("pesca_a_dor/core/infos.json", "r") as file:
     config_json = load(file)
 
-today_log="pesca_a_dor/logs/{}.txt".format(get_current_day())
+today_log="logs/{}.txt".format(get_current_day())
