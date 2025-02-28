@@ -6,6 +6,7 @@ from threading import Thread, Event
 from core.config import *
 from core.accounts import pxg_accounts
 from json import load
+from itertools import cycle
 import argparse
 import ctypes
 import os
