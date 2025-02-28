@@ -26,7 +26,7 @@ git clone https://github.com/emmacyberia/pesca-a-dor.git
 cd pesca-a-dor
 
 # create a conda environment and install dependencies
-conda env create -f environment.yml
+conda env create --name pesca-a-dor -f environment.yml
 
 # activate the environment
 conda activate pesca-a-dor
